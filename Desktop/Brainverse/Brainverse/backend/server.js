@@ -97,63 +97,63 @@ async function extractTextFromPdf(filePath) {
 async function generateMindMapWithGemini(text) {
   try {
     console.log("Received text for processing:", text.substring(0, 100) + "...");
-    
+
     // Get the Gemini 1.5 model
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
-    
+
     // Create prompt for mind map generation
     const prompt = `
-    Generate a mind map structure from the following text. 
-    Extract the main concept and related subconcepts with descriptions.
-    Format the response as a JSON array with this structure:
-    [
-      {
-        "id": "1",
-        "label": "Main Concept",
-        "description": "Core concept description",
-        "importance": 5
-      },
-      {
-        "id": "2",
-        "label": "Subconcept 1",
-        "description": "Description of subconcept",
-        "importance": 3,
-        "parent": "1"
-      },
-      ...
-    ]
-    
-    Importance should be a number from 1-5 indicating the concept's significance.
-    Include a "parent" field for all nodes except the main concept to establish relationships.
-    For nodes that should connect to multiple parents, use the most important parent and note other connections in an optional "relatedTo" array of IDs.
-    each parent should have atmost 3 childs if not necessary to have more. try to have atleast 3 levels and a maximum of 5 levels.
-    
+    Format your output as a **JSON array** using this structure:
+[
+  {
+    "id": "1",
+    "label": "Main Concept",
+    "description": "Brief explanation",
+    "importance": 5
+  },
+  {
+    "id": "2",
+    "label": "Subconcept 1",
+    "description": "Explanation of this subconcept",
+    "importance": 3,
+    "parent": "1"
+  }
+]
+
+Rules:
+- Only the main concept should have no parent.
+- Every node must have a unique string ID.
+- Each node (except the root) must have one parent.
+- Each parent must have no more than 3 children unless strongly needed.
+- Structure should be 3–5 levels deep.
+- Optional: Use "relatedTo" to show cross-links.
+
     Input text: ${text}`;
 
     console.log("Sending prompt to Gemini...");
-    
+
     // Generate content
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const textResponse = await response.text();
-    
+
     console.log("Received raw response from Gemini:", textResponse.substring(0, 200) + "...");
-    
+
     // Extract JSON from response (handle potential text wrapping)
     const jsonMatch = textResponse.match(/\[.*\]/s); // Extracts JSON content
-if (!jsonMatch) {
-  console.error("No valid JSON array found in response.");
-  throw new Error("Invalid JSON format from Gemini API");
-}
-const jsonStr = jsonMatch[0];
+    if (!jsonMatch) {
+      console.error("No valid JSON array found in response.");
+      throw new Error("Invalid JSON format from Gemini API");
+    }
+    const jsonStr = jsonMatch[0];
 
-    
+
     console.log("Extracted JSON:", jsonStr.substring(0, 200) + "...");
-    
+
     try {
       // Parse the response into JSON
       const mindMapData = JSON.parse(jsonStr);
-      
+
       // Process the data to create nodes and edges
       const nodes = mindMapData.map(item => ({
         id: item.id,
@@ -165,10 +165,10 @@ const jsonStr = jsonMatch[0];
         },
         position: { x: 0, y: 0 } // Positions will be calculated on the client
       }));
-      
+
       // Create edges based on parent relationships
       const edges = [];
-      
+
       mindMapData.forEach(item => {
         if (item.parent) {
           edges.push({
@@ -179,7 +179,7 @@ const jsonStr = jsonMatch[0];
             style: { stroke: '#1d4ed8', strokeWidth: 2 }
           });
         }
-        
+
         // Add edges for related items
         if (item.relatedTo && Array.isArray(item.relatedTo)) {
           item.relatedTo.forEach(relatedId => {
@@ -188,8 +188,8 @@ const jsonStr = jsonMatch[0];
               source: relatedId,
               target: item.id,
               animated: false,
-              style: { 
-                stroke: '#3b82f6', 
+              style: {
+                stroke: '#3b82f6',
                 strokeWidth: 1.5,
                 strokeDasharray: '3,3'
               }
@@ -197,7 +197,7 @@ const jsonStr = jsonMatch[0];
           });
         }
       });
-      
+
       console.log(`Generated ${nodes.length} nodes and ${edges.length} edges`);
       return { nodes, edges };
     } catch (jsonError) {
@@ -383,11 +383,11 @@ async function getTranscript(videoId, lang = "en") {
 app.post('/api/generate-mind-map', async (req, res) => {
   try {
     const { text } = req.body;
-    
+
     if (!text || text.trim() === '') {
       return res.status(400).json({ error: 'Text input is required' });
     }
-    
+
     const mindMapData = await generateMindMapWithGemini(text);
     res.json(mindMapData);
   } catch (error) {
