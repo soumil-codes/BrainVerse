@@ -23,7 +23,7 @@ const ChatAssistant = () => {
       const timer = setTimeout(() => {
         setShowIntro(false);
         setMessages([{
-          sender: "StudyBuddy", 
+          sender: "StudyBuddy",
           text: "Hello! I'm your StudyBuddy AI assistant. How can I help with your studies today?",
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }]);
@@ -32,34 +32,97 @@ const ChatAssistant = () => {
     }
   }, [isChatOpen]);
 
+  // Navigation function to handle redirects with suggested prompts
+  const navigateTo = (path, suggestedPrompt = "") => {
+    // Close the chat window
+    setIsChatOpen(false);
+    // Navigate to the specified path
+    window.location.href = path;
+  };
+
+  // Function to check if a message contains navigation commands
+  const checkForNavigation = (text) => {
+    // Updated regex to handle URL parameters and suggested prompts
+    const navRegex = /\[NAV:([^\|\]]+)(?:\|\|([^\]]+))?\]/g;
+    const match = navRegex.exec(text);
+  
+    if (match) {
+      const path = match[1];
+      const suggestedPrompt = match[2] || "";
+  
+      // Remove the navigation command from the text
+      const cleanText = text.replace(navRegex, '').trim();
+  
+      return {
+        hasNavigation: true,
+        path: path,
+        suggestedPrompt: suggestedPrompt,
+        cleanText: cleanText || text // Fallback to original text if clean is empty
+      };
+    }
+  
+    return {
+      hasNavigation: false,
+      cleanText: text
+    };
+  };
+
   const sendMessage = async () => {
     if (!input.trim()) return;
-    
+  
     const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const userMessage = { sender: "You", text: input, timestamp };
-    
+  
     setMessages([...messages, userMessage]);
     setInput("");
     setLoading(true);
-    
+  
     try {
-      const { data } = await axios.post("http://localhost:5000/chat", { message: input });
-      
-      setTimeout(() => {
-        const botMessage = { 
-          sender: "StudyBuddy", 
-          text: data.reply || "I'm processing your request...", 
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-        setMessages(prev => [...prev, botMessage]);
-        setLoading(false);
-      }, Math.random() * 1000 + 500);
-      
+      const { data } = await axios.post("http://localhost:3001/chat", {
+        message: input,
+        availablePaths: [
+          "/dashboard",
+          "/mindmap",
+          "/quiz",
+          "/flashcards",
+          "/profile",
+          "/summarization",
+        ]
+      });
+  
+      // Check if response contains navigation instruction
+      const { hasNavigation, path, suggestedPrompt, cleanText } = checkForNavigation(data.reply);
+  
+      // Create the bot response
+      const botMessage = {
+        sender: "StudyBuddy",
+        text: cleanText || "I'm processing your request...",
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        preserveFormatting: true
+      };
+  
+      setMessages(prev => [...prev, botMessage]);
+      setLoading(false);
+  
+      if (hasNavigation) {
+        setTimeout(() => {
+          // Add a navigation notification message
+          setMessages(prev => [...prev, {
+            sender: "StudyBuddy",
+            text: `Taking you to ${path}...`,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            isNavigation: true
+          }]);
+  
+          // Navigate after a brief delay
+          setTimeout(() => navigateTo(path, suggestedPrompt), 1500);
+        }, 1000);
+      }
     } catch (error) {
       setTimeout(() => {
-        const errorMessage = { 
-          sender: "StudyBuddy", 
-          text: "Sorry, I'm having trouble connecting right now. Please try again.", 
+        const errorMessage = {
+          sender: "StudyBuddy",
+          text: "Sorry, I'm having trouble connecting right now. Please try again.",
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           isError: true
         };
@@ -74,6 +137,25 @@ const ChatAssistant = () => {
       e.preventDefault();
       sendMessage();
     }
+  };
+
+  // Function to render message text with proper formatting
+  const renderMessageText = (message) => {
+    if (message.isNavigation) {
+      return (
+        <div className="flex items-center text-blue-600 overflow-hidden">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+          </svg>
+          <p className="text-sm">{message.text}</p>
+        </div>
+      );
+    } else if (message.sender === "StudyBuddy" && message.preserveFormatting) {
+      return (
+        <pre className="text-sm whitespace-pre-wrap font-sans">{message.text}</pre>
+      );
+    }
+    return <p className="text-sm">{message.text}</p>;
   };
 
   return (
@@ -175,11 +257,12 @@ const ChatAssistant = () => {
                         animate={{ opacity: 1, y: 0 }}
                       >
                         <div
-                          className={`max-w-[80%] p-3 rounded-lg ${
-                            msg.sender === "You"
+                          className={`max-w-[80%] p-3 rounded-lg ${msg.sender === "You"
                               ? "bg-blue-600 text-white"
-                              : "bg-white border border-gray-200"
-                          }`}
+                              : msg.isNavigation
+                                ? "bg-blue-100 border border-blue-300"
+                                : "bg-white border border-gray-200"
+                            }`}
                         >
                           <div className="flex items-center space-x-2 mb-1">
                             <span className="text-xs font-medium">
@@ -189,7 +272,7 @@ const ChatAssistant = () => {
                               {msg.timestamp}
                             </span>
                           </div>
-                          <p className="text-sm">{msg.text}</p>
+                          {renderMessageText(msg)}
                         </div>
                       </motion.div>
                     ))}

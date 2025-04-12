@@ -45,7 +45,7 @@ router.post('/quiz',  authenticateUser, async (req, res) => {
   }
 });
 
-router.post('/flashcards', authMiddleware, async (req, res) => {
+router.post('/flashcards', authenticateUser, async (req, res) => {
   const { id, title, content, date } = req.body;
 
   try {
@@ -64,7 +64,7 @@ router.post('/flashcards', authMiddleware, async (req, res) => {
 });
 
 // Get flashcards
-router.get('/flashcards', authMiddleware, async (req, res) => {
+router.get('/flashcards', authenticateUser, async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: "User not found" });

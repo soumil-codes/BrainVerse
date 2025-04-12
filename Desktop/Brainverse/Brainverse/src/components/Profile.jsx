@@ -821,7 +821,7 @@ const ProfilePage = () => {
                       Test your knowledge by taking your first quiz
                     </p>
                     <Button
-                    onClick={() => navigate('quiz')}
+                    onClick={() => navigate('/quiz')}
                      className="bg-gradient-to-r from-green-600 to-blue-700 hover:from-green-700 hover:to-blue-800">
                       Take a Quiz
                     </Button>

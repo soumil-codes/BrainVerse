@@ -712,7 +712,88 @@ app.post('/api/summarize-youtube', async (req, res) => {
 });
 
 
-// Start server
+// Chat endpoint for StudyBuddy chatbot
+app.post('/chat', async (req, res) => {
+  try {
+    const { message, availablePaths = [] } = req.body;
+
+    if (!message || message.trim() === '') {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+
+    console.log("Received chat message:", message);
+
+    // Initialize Gemini model
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+
+    // Enhanced prompt that supports both navigation and content suggestions
+    const prompt = `
+      You are StudyBuddy, an educational AI assistant for a learning website. 
+      
+      Available navigation paths on the website:
+      ${availablePaths.map(path => `- ${path}`).join('\n')}
+      
+      only If the user's message indicates they want to go to a specific section, include a navigation command 
+      at the END of your response using this format:
+      [NAV:/path/to/page]
+      
+      Example:
+      - For quiz page: [NAV:/quiz]
+      - For mind map: [NAV:/mindmap]
+      
+      Keep your response helpful, accurate, and relatively brief.
+      Do not use markdown formatting like ** for bold or * for italics.
+      NOTE: if not needed do not give the navigation command.
+      
+      Please respond to this student question or message:
+      "${message}"
+    `;
+
+    // Generate content
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let reply = await response.text();
+
+    // Process the reply to properly URL encode the prompt parameter
+    const navMatch = reply.match(/\[NAV:([^\]]+)\]/);
+    // if (navMatch) {
+    //   const navCommand = navMatch[1];
+    //   const [path, suggestedPrompt] = navCommand.split('||');
+
+    //   // Check if this is a path that needs a prompt parameter
+    //   if (path.includes('/quiz') || path.includes('/mindmap') ||
+    //     path.includes('/flashcards') || path.includes('/summarization')) {
+
+    //     // Extract base path and any existing parameters
+    //     const [basePath, existingParams] = path.split('?');
+
+    //     // If there's a suggested prompt, use it as the prompt parameter
+    //     if (suggestedPrompt) {
+    //       const encodedPrompt = encodeURIComponent(suggestedPrompt);
+    //       const newPath = `${basePath}?prompt=${encodedPrompt}`;
+
+    //       // Replace the original navigation command with the updated one
+    //       reply = reply.replace(navMatch[0], `[NAV:${path}||${suggestedPrompt}]`);
+    //     }
+    //   }
+    // }
+
+    res.json({ reply });
+
+  } catch (error) {
+    console.error('Chat error:', error);
+
+    res.status(500).json({
+      error: 'Failed to process message',
+      reply: "I'm sorry, I'm having trouble processing your request right now. Please try again in a moment."
+    });
+  }
+});
+// Simple health check endpoint
+app.get('/chat/health', (req, res) => {
+  res.json({ status: 'ok', message: 'StudyBuddy chat service is running' });
+});
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
