@@ -34,10 +34,6 @@ const protect = async (req, res, next) => {
   }
 
   try {
-    if (!process.env.JWT_SECRET) {
-      throw new Error('Missing JWT_SECRET in environment variables');
-    }
-
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id).select('-password');
 
@@ -53,6 +49,7 @@ const protect = async (req, res, next) => {
   }
 };
 
+// ✅ Export after defining the functions
 module.exports = {
   authenticateUser,
   protect

@@ -30,6 +30,10 @@ const UserSchema = new mongoose.Schema({
       type: Number,
       default: 0
     },
+    flashcards: {
+      type: Number,
+      default: 0
+    },
     quizzes: {
       type: Number,
       default: 0
@@ -56,5 +60,16 @@ const UserSchema = new mongoose.Schema({
     totalQuestions: Number
   }]
 }, { timestamps: true });
+flashcards: [
+  {
+    id: String,
+    title: String,
+    content: String,
+    date: String,
+    likes: { type: Number, default: 0 },
+    comments: { type: Number, default: 0 }
+  }
+],
+
 
 module.exports = mongoose.model('User', UserSchema);

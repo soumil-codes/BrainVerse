@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
@@ -56,19 +56,7 @@ const features = [
     "route": "/flashcards"
   },
   
-  {
-    name: "Real-Time Processing",
-    icon: "⚡",
-    description: "Experience near-instantaneous analysis as you type. Watch summaries, mind maps, and quizzes update live with each keystroke for seamless workflow integration.",
-    color: "from-pink-400 to-rose-500",
-    keyBenefits: [
-      "Instant updates",
-      "Live collaboration",
-      "Version history"
-    ],
-    exampleUseCase: "Collaborate with teammates on a shared document with real-time mind map updates during editing.",
-    route: "/realtime"
-  },
+  
   {
     name: "Community Collaborative Study",
     icon: "👥",
@@ -84,20 +72,44 @@ const features = [
   }
 ];
 
-const Dashboard = ({ userName }) => {
+const Dashboard = () => {
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [isHovering, setIsHovering] = useState(null);
+  const [userData, setUserData] = useState(null);
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/');
-  };
+  // Fetch user data from localStorage on component mount
+  useEffect(() => {
+    const userString = localStorage.getItem('user');
+    if (!userString) {
+      // Redirect to login if no user data is found
+      navigate('/login');
+      return;
+    }
+    
+    try {
+      const user = JSON.parse(userString);
+      setUserData(user);
+    } catch (error) {
+      console.error("Error parsing user data:", error);
+      navigate('/login');
+    }
+  }, [navigate]);
+
+  
 
   const handleTryFeature = (feature) => {
     navigate(feature.route);
   };
+
+  // Show loading state until user data is loaded
+  if (!userData) {
+    return (
+      <div className="flex h-screen bg-midnight-900 text-gray-100 items-center justify-center">
+        <div className="text-2xl">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-midnight-900 text-gray-100 overflow-hidden">
@@ -113,7 +125,7 @@ const Dashboard = ({ userName }) => {
           className="flex items-center space-x-3"
         >
           <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-xl">
-            �
+            🧠
           </div>
           <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-300 bg-clip-text text-transparent">
             BrainVerse
@@ -146,16 +158,7 @@ const Dashboard = ({ userName }) => {
           </ul>
         </div>
 
-        {/* Logout Button */}
-        <motion.button
-          onClick={handleLogout}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="mt-auto p-3 rounded-lg bg-midnight-700 hover:bg-midnight-600 transition-colors duration-300 flex items-center space-x-2"
-        >
-          <span>👋</span>
-          <span>Logout</span>
-        </motion.button>
+        
       </motion.div>
 
       {/* Main Content */}
@@ -251,7 +254,7 @@ const Dashboard = ({ userName }) => {
             >
               <div className="max-w-4xl mx-auto">
                 <div className="mb-8">
-                  <h1 className="text-4xl font-bold mb-4">Hello, {userName}!</h1>
+                  <h1 className="text-4xl font-bold mb-4">Hello, {userData.fullName}!</h1>
                   <p className="text-xl text-gray-300">
                     Welcome to BrainVerse - Your AI-Powered Learning Companion
                   </p>

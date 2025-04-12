@@ -15,7 +15,8 @@ import {
   MessageSquare, 
   BookmarkPlus,
   Activity,
-  Mail
+  Mail,
+  Layers
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -48,10 +49,12 @@ const ProfilePage = () => {
       summaries: 0,
       mindMaps: 0,
       quizzes: 0,
+      flashcards: 0
     },
     summaries: [],
     mindMaps: [],
-    quizzes: []
+    quizzes: [],
+    flashcards: []
   };
 
   const [profileData, setProfileData] = useState({
@@ -96,10 +99,12 @@ const ProfilePage = () => {
             summaries: userData.summaries?.length || 0,
             mindMaps: userData.mindMaps?.length || 0,
             quizzes: userData.quizzes?.length || 0,
+            flashcards: userData.flashcards?.length || 0
           },
           summaries: userData.summaries || [],
           mindMaps: userData.mindMaps || [],
-          quizzes: userData.quizzes || []
+          quizzes: userData.quizzes || [],
+          flashcards: userData.flashcards || []
         };
 
         setUser(transformedData);
@@ -234,7 +239,8 @@ const ProfilePage = () => {
     stats: user.stats || defaultUserData.stats,
     summaries: user.summaries || [],
     mindMaps: user.mindMaps || [],
-    quizzes: user.quizzes || []
+    quizzes: user.quizzes || [],
+    flashcards: user.flashcards || []
   } : defaultUserData;
 
   // Animation variants
@@ -323,58 +329,8 @@ const ProfilePage = () => {
     );
   }
 
-  if (!isLoaded) {
-    return (
-      <div className="max-w-8xl w-{800px} mx-auto pt-20 flex flex-col items-center justify-center min-h-screen bg-[#0a1929]">
-        <div className="relative mb-8 pt-20">
-          <motion.div
-            animate={{ 
-              scale: [1, 1.2, 1],
-              rotate: [0, 180, 360],
-            }}
-            transition={{ 
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut" 
-            }}
-            className="absolute -inset-8 rounded-full opacity-30 bg-gradient-to-r from-blue-600 to-purple-600 blur-xl"
-          />
-        </div>
-        <h2 className="text-2xl font-bold mb-6 text-white">Loading Profile</h2>
-        <div className="w-full max-w-md relative">
-          <Progress value={progress} className="h-2 bg-[#1a2e4c]" />
-          <motion.div 
-            className="h-2 absolute top-0 left-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
-            style={{ width: `${progress/3}%` }}
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-          />
-        </div>
-        <p className="mt-4 text-blue-300">{progress}% Complete</p>
-      </div>
-    );
-  }
-
-  if (error && !user) {
-    return (
-      <div className="max-w-8xl mx-auto p-6 flex flex-col items-center justify-center min-h-screen bg-[#0a1929]">
-        <Card className="p-8 rounded-2xl overflow-hidden bg-gradient-to-r from-[#0f2942] to-[#162a4a] border-[#1e3a5f] text-center">
-          <Activity className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-4">Authentication Error</h2>
-          <p className="text-blue-300 mb-6">{error}</p>
-          <Button 
-            onClick={() => window.location.href = '/login'}
-            className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900"
-          >
-            Go to Login
-          </Button>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <motion.div 
+    <motion.div
       className="max-w-8xl mx-auto p-6 pb-24 bg-[#0a1929] text-gray-100 min-h-screen"
       initial="hidden"
       animate="visible"
@@ -385,7 +341,7 @@ const ProfilePage = () => {
         <Card className="p-6 rounded-2xl overflow-hidden bg-gradient-to-r from-[#0f2942] to-[#162a4a] border-[#1e3a5f] relative">
           <div className="absolute top-0 right-0 w-40 h-40 bg-blue-500 rounded-full blur-3xl opacity-10 -mr-20 -mt-20"></div>
           <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500 rounded-full blur-3xl opacity-10 -ml-16 -mb-16"></div>
-          
+
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6 relative">
             <motion.div
               whileHover={{ scale: 1.05 }}
@@ -395,12 +351,14 @@ const ProfilePage = () => {
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full blur-sm opacity-70"></div>
               <Avatar className="w-24 h-24 bg-gradient-to-br from-blue-600 to-purple-700 ring-2 ring-blue-400 shadow-lg relative z-10" />
             </motion.div>
-            
+
             <div className="flex-1">
               {isEditing ? (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-blue-300 mb-1">Name</label>
+                    <label className="block text-sm font-medium text-blue-300 mb-1">
+                      Name
+                    </label>
                     <input
                       type="text"
                       name="name"
@@ -410,7 +368,9 @@ const ProfilePage = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-blue-300 mb-1">Title</label>
+                    <label className="block text-sm font-medium text-blue-300 mb-1">
+                      Title
+                    </label>
                     <input
                       type="text"
                       name="title"
@@ -420,14 +380,14 @@ const ProfilePage = () => {
                     />
                   </div>
                   <div className="flex gap-2">
-                    <Button 
+                    <Button
                       onClick={handleSaveProfile}
                       className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900"
                     >
                       Save Changes
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => setIsEditing(false)}
                       className="border-blue-500/30 text-blue-300 hover:bg-blue-600/20"
                     >
@@ -438,121 +398,162 @@ const ProfilePage = () => {
               ) : (
                 <>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-2xl font-bold text-white">{userData.name || "User"}</h2>
+                    <h2 className="text-2xl font-bold text-white">
+                      {userData.name || "User"}
+                    </h2>
                   </div>
                   <div className="flex items-center gap-2 text-blue-300 mt-1">
                     <Mail className="w-4 h-4" />
                     <span>{userData.email}</span>
                   </div>
                   <p className="text-blue-400 mt-1">{userData.title}</p>
-                  
+
                   <div className="flex flex-wrap gap-2 mt-4">
-    <Button 
-      onClick={handleEditProfile}
-      className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900"
-    >
-      <PenTool className="w-4 h-4 mr-2" /> Edit Profile
-    </Button>
-    <Button 
-      onClick={handleLogout}
-      variant="outline"
-      className="border-red-500/30 text-red-400 hover:bg-red-600/20 hover:text-red-100"
-    >
-      Logout
-    </Button>
-  </div>
+                    <Button
+                      onClick={handleEditProfile}
+                      className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900"
+                    >
+                      <PenTool className="w-4 h-4 mr-2" /> Edit Profile
+                    </Button>
+                    <Button
+                      onClick={handleLogout}
+                      variant="outline"
+                      className="border-red-500/30 text-red-400 hover:bg-red-600/20 hover:text-red-100"
+                    >
+                      Logout
+                    </Button>
+                  </div>
                 </>
               )}
             </div>
           </div>
         </Card>
       </motion.div>
-      
+
       {/* Stats Cards */}
-      <motion.div 
-        className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6"
+      <motion.div
+        className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6"
         variants={itemVariants}
       >
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
-          animate={activeStats ? { scale: 1, opacity: 1 } : { scale: 0.8, opacity: 0 }}
+          animate={
+            activeStats ? { scale: 1, opacity: 1 } : { scale: 0.8, opacity: 0 }
+          }
           transition={{ duration: 0.5, delay: 0 }}
           whileHover={{ y: -5 }}
           className="bg-[#152a47] rounded-xl border border-blue-500/20 p-4 flex flex-col items-center justify-center"
         >
           <BookOpen className="w-8 h-8 text-blue-400 mb-2" />
-          <span className="text-2xl font-bold text-white">{userData.stats.summaries}</span>
+          <span className="text-2xl font-bold text-white">
+            {userData.stats.summaries}
+          </span>
           <span className="text-blue-300 text-sm">Summaries</span>
         </motion.div>
-        
+
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
-          animate={activeStats ? { scale: 1, opacity: 1 } : { scale: 0.8, opacity: 0 }}
+          animate={
+            activeStats ? { scale: 1, opacity: 1 } : { scale: 0.8, opacity: 0 }
+          }
           transition={{ duration: 0.5, delay: 0.1 }}
           whileHover={{ y: -5 }}
           className="bg-[#152a47] rounded-xl border border-blue-500/20 p-4 flex flex-col items-center justify-center"
         >
           <Brain className="w-8 h-8 text-purple-400 mb-2" />
-          <span className="text-2xl font-bold text-white">{userData.stats.mindMaps}</span>
+          <span className="text-2xl font-bold text-white">
+            {userData.stats.mindMaps}
+          </span>
           <span className="text-blue-300 text-sm">Mind Maps</span>
         </motion.div>
-        
+
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
-          animate={activeStats ? { scale: 1, opacity: 1 } : { scale: 0.8, opacity: 0 }}
+          animate={
+            activeStats ? { scale: 1, opacity: 1 } : { scale: 0.8, opacity: 0 }
+          }
           transition={{ duration: 0.5, delay: 0.2 }}
           whileHover={{ y: -5 }}
           className="bg-[#152a47] rounded-xl border border-blue-500/20 p-4 flex flex-col items-center justify-center"
         >
           <CheckCircle className="w-8 h-8 text-green-400 mb-2" />
-          <span className="text-2xl font-bold text-white">{userData.stats.quizzes}</span>
+          <span className="text-2xl font-bold text-white">
+            {userData.stats.quizzes}
+          </span>
           <span className="text-blue-300 text-sm">Quizzes</span>
         </motion.div>
+
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={
+            activeStats ? { scale: 1, opacity: 1 } : { scale: 0.8, opacity: 0 }
+          }
+          transition={{ duration: 0.5, delay: 0.3 }}
+          whileHover={{ y: -5 }}
+          className="bg-[#152a47] rounded-xl border border-blue-500/20 p-4 flex flex-col items-center justify-center"
+        >
+          <Layers className="w-8 h-8 text-amber-400 mb-2" />
+          <span className="text-2xl font-bold text-white">
+            {userData.stats.flashcards}
+          </span>
+          <span className="text-blue-300 text-sm">Flashcards</span>
+        </motion.div>
       </motion.div>
-      
+
       {/* Content Tabs */}
       <motion.div variants={itemVariants} className="mt-8">
-        <Tabs 
-          defaultValue="summaries" 
+        <Tabs
+          defaultValue="summaries"
           className="w-full"
           onValueChange={handleTabChange}
         >
-          <TabsList className="flex space-x-2 p-1 bg-[#152a47]/50 rounded-xl border border-blue-500/20">
-            <TabsTrigger 
+          <TabsList className="flex space-x-2 p-1 bg-[#152a47]/50 rounded-xl border border-blue-500/20 flex-wrap">
+            <TabsTrigger
               value="summaries"
               className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                selectedTab === "summaries" 
-                  ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white" 
+                selectedTab === "summaries"
+                  ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white"
                   : "text-blue-300 hover:bg-blue-800/20"
               }`}
             >
               <BookOpen className="w-4 h-4" />
               Summaries
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="mindmaps"
               className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                selectedTab === "mindmaps" 
-                  ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white" 
+                selectedTab === "mindmaps"
+                  ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white"
                   : "text-blue-300 hover:bg-blue-800/20"
               }`}
             >
               <Brain className="w-4 h-4" />
               Mind Maps
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="quizzes"
               className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                selectedTab === "quizzes" 
-                  ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white" 
+                selectedTab === "quizzes"
+                  ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white"
                   : "text-blue-300 hover:bg-blue-800/20"
               }`}
             >
               <CheckCircle className="w-4 h-4" />
               Quizzes
             </TabsTrigger>
+            <TabsTrigger
+              value="flashcards"
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+                selectedTab === "flashcards"
+                  ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white"
+                  : "text-blue-300 hover:bg-blue-800/20"
+              }`}
+            >
+              <Layers className="w-4 h-4" />
+              Flashcards
+            </TabsTrigger>
           </TabsList>
-          
+
           <AnimatePresence mode="wait">
             <TabsContent value="summaries">
               <motion.div
@@ -574,52 +575,76 @@ const ProfilePage = () => {
                     >
                       <div className="p-5 relative">
                         {hoverCard === summary.id && (
-                          <motion.div 
+                          <motion.div
                             className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                           />
                         )}
-                        
+
                         <div className="flex justify-between items-start relative z-10">
                           <div>
-                            <h3 className="font-semibold text-lg text-white">{summary.title}</h3>
+                            <h3 className="font-semibold text-lg text-white">
+                              {summary.title}
+                            </h3>
                             <div className="flex items-center text-sm text-blue-300 mt-1">
                               <Clock className="w-3 h-3 mr-1" />
                               <span>{summary.date}</span>
                             </div>
                           </div>
-                          <Button variant="ghost" size="sm" className="text-blue-300 hover:text-blue-100 hover:bg-blue-800/30">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-blue-300 hover:text-blue-100 hover:bg-blue-800/30"
+                          >
                             <BookmarkPlus className="w-4 h-4" />
                           </Button>
                         </div>
-                        
+
                         <div className="flex items-center justify-between mt-4 pt-4 border-t border-blue-500/20 relative z-10">
                           <div className="flex space-x-4">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               className="flex items-center text-blue-300 hover:text-red-400"
                               onClick={() => handleLikeClick(summary.id)}
                             >
                               <motion.div
-                                animate={likeAnimation === summary.id ? { 
-                                  scale: [1, 1.5, 1],
-                                } : {}}
+                                animate={
+                                  likeAnimation === summary.id
+                                    ? {
+                                        scale: [1, 1.5, 1],
+                                      }
+                                    : {}
+                                }
                               >
-                                <Heart className={`w-4 h-4 mr-1 ${likeAnimation === summary.id ? "fill-red-400 text-red-400" : ""}`} />
+                                <Heart
+                                  className={`w-4 h-4 mr-1 ${
+                                    likeAnimation === summary.id
+                                      ? "fill-red-400 text-red-400"
+                                      : ""
+                                  }`}
+                                />
                               </motion.div>
                               {summary.likes || 0}
                             </Button>
-                            
-                            <Button variant="ghost" size="sm" className="flex items-center text-blue-300 hover:text-blue-100">
+
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="flex items-center text-blue-300 hover:text-blue-100"
+                            >
                               <MessageSquare className="w-4 h-4 mr-1" />
                               {summary.comments || 0}
                             </Button>
                           </div>
-                          
-                          <Button variant="outline" size="sm" className="text-blue-300 border-blue-500/30 hover:bg-blue-600/20 hover:text-blue-100">
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-blue-300 border-blue-500/30 hover:bg-blue-600/20 hover:text-blue-100"
+                          >
                             Read
                           </Button>
                         </div>
@@ -629,16 +654,22 @@ const ProfilePage = () => {
                 ) : (
                   <Card className="p-8 text-center bg-[#152a47] border-blue-500/20">
                     <BookOpen className="w-12 h-12 text-blue-500/40 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-white mb-2">No summaries yet</h3>
-                    <p className="text-blue-300 mb-4">Create your first summary to see it here</p>
-                    <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800">
+                    <h3 className="text-lg font-medium text-white mb-2">
+                      No summaries yet
+                    </h3>
+                    <p className="text-blue-300 mb-4">
+                      Create your first summary to see it here
+                    </p>
+                    <Button 
+                    onClick={() => navigate('/summarization')}
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800">
                       Create Summary
                     </Button>
                   </Card>
                 )}
               </motion.div>
             </TabsContent>
-            
+
             <TabsContent value="mindmaps">
               <motion.div
                 key="mindmaps"
@@ -658,7 +689,9 @@ const ProfilePage = () => {
                       <div className="p-5">
                         <div className="flex justify-between items-start">
                           <div>
-                            <h3 className="font-semibold text-lg text-white">{mindMap.title}</h3>
+                            <h3 className="font-semibold text-lg text-white">
+                              {mindMap.title}
+                            </h3>
                             <div className="flex items-center gap-3 text-sm text-blue-300 mt-1">
                               <span className="flex items-center">
                                 <Clock className="w-3 h-3 mr-1" />
@@ -670,13 +703,21 @@ const ProfilePage = () => {
                               </span>
                             </div>
                           </div>
-                          <Button variant="ghost" size="sm" className="text-blue-300 hover:text-blue-100 hover:bg-blue-800/30">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-blue-300 hover:text-blue-100 hover:bg-blue-800/30"
+                          >
                             <BookmarkPlus className="w-4 h-4" />
                           </Button>
                         </div>
-                        
+
                         <div className="flex justify-between items-center mt-4 pt-4 border-t border-blue-500/20">
-                          <Button variant="outline" size="sm" className="text-blue-300 border-blue-500/30 hover:bg-blue-600/20 hover:text-blue-100">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-blue-300 border-blue-500/30 hover:bg-blue-600/20 hover:text-blue-100"
+                          >
                             Explore
                           </Button>
                         </div>
@@ -686,16 +727,23 @@ const ProfilePage = () => {
                 ) : (
                   <Card className="p-8 text-center bg-[#152a47] border-blue-500/20">
                     <Brain className="w-12 h-12 text-purple-500/40 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-white mb-2">No mind maps yet</h3>
-                    <p className="text-blue-300 mb-4">Create your first mind map to visualize connections</p>
-                    <Button className="bg-gradient-to-r from-purple-600 to-blue-700 hover:from-purple-700 hover:to-blue-800">
+                    <h3 className="text-lg font-medium text-white mb-2">
+                      No mind maps yet
+                    </h3>
+                    <p className="text-blue-300 mb-4">
+                      Create your first mind map to visualize connections
+                    </p>
+                    <Button
+                        onClick={() => navigate('/mindmap')}
+                      className="bg-gradient-to-r from-purple-600 to-blue-700 hover:from-purple-700 hover:to-blue-800"
+                    >
                       Create Mind Map
                     </Button>
                   </Card>
                 )}
               </motion.div>
             </TabsContent>
-            
+
             <TabsContent value="quizzes">
               <motion.div
                 key="quizzes"
@@ -715,24 +763,34 @@ const ProfilePage = () => {
                       <div className="p-5">
                         <div className="flex justify-between items-start">
                           <div>
-                            <h3 className="font-semibold text-lg text-white">{quiz.title}</h3>
+                            <h3 className="font-semibold text-lg text-white">
+                              {quiz.title}
+                            </h3>
                             <div className="flex items-center text-sm text-blue-300 mt-1">
                               <Clock className="w-3 h-3 mr-1" />
                               <span>{quiz.date}</span>
                             </div>
                           </div>
-                          <Button variant="ghost" size="sm" className="text-blue-300 hover:text-blue-100 hover:bg-blue-800/30">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-blue-300 hover:text-blue-100 hover:bg-blue-800/30"
+                          >
                             <BookmarkPlus className="w-4 h-4" />
                           </Button>
                         </div>
-                        
+
                         <div className="mt-4">
                           <div className="flex justify-between items-center mb-1">
-                            <span className="text-sm font-medium text-blue-300">Score</span>
-                            <span className="text-sm font-bold text-green-400">{quiz.score}</span>
+                            <span className="text-sm font-medium text-blue-300">
+                              Score
+                            </span>
+                            <span className="text-sm font-bold text-green-400">
+                              {quiz.score}
+                            </span>
                           </div>
                           <div className="relative h-2 bg-[#0f2039] rounded-full overflow-hidden">
-                            <motion.div 
+                            <motion.div
                               className="absolute top-0 left-0 h-full bg-gradient-to-r from-green-500 to-green-600 rounded-full"
                               initial={{ width: 0 }}
                               animate={{ width: quiz.score }}
@@ -740,9 +798,13 @@ const ProfilePage = () => {
                             />
                           </div>
                         </div>
-                        
+
                         <div className="flex justify-between items-center mt-4 pt-4 border-t border-blue-500/20">
-                          <Button variant="outline" size="sm" className="text-blue-300 border-blue-500/30 hover:bg-blue-600/20 hover:text-blue-100">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-blue-300 border-blue-500/30 hover:bg-blue-600/20 hover:text-blue-100"
+                          >
                             Retake
                           </Button>
                         </div>
@@ -752,15 +814,137 @@ const ProfilePage = () => {
                 ) : (
                   <Card className="p-8 text-center bg-[#152a47] border-blue-500/20">
                     <CheckCircle className="w-12 h-12 text-green-500/40 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-white mb-2">No quizzes yet</h3>
-                    <p className="text-blue-300 mb-4">Test your knowledge by taking your first quiz</p>
-                    <Button className="bg-gradient-to-r from-green-600 to-blue-700 hover:from-green-700 hover:to-blue-800">
+                    <h3 className="text-lg font-medium text-white mb-2">
+                      No quizzes yet
+                    </h3>
+                    <p className="text-blue-300 mb-4">
+                      Test your knowledge by taking your first quiz
+                    </p>
+                    <Button
+                    onClick={() => navigate('quiz')}
+                     className="bg-gradient-to-r from-green-600 to-blue-700 hover:from-green-700 hover:to-blue-800">
                       Take a Quiz
                     </Button>
                   </Card>
                 )}
               </motion.div>
             </TabsContent>
+
+            <TabsContent value="flashcards">
+              <motion.div
+                key="summaries"
+                variants={tabContentVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="mt-6 space-y-4"
+              >
+               {userData.flashcards && userData.flashcards.length > 0 ? (
+  userData.flashcards.map((flashcard) => (
+                    <motion.div
+                      key={flashcard.id}
+                      whileHover={{ scale: 1.02 }}
+                      onHoverStart={() => setHoverCard(flashcard.id)}
+                      onHoverEnd={() => setHoverCard(null)}
+                      className="bg-[#152a47] rounded-xl border border-blue-500/20 overflow-hidden"
+                    >
+                      <div className="p-5 relative">
+                        {hoverCard === flashcard.id && (
+                          <motion.div
+                            className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                          />
+                        )}
+
+                        <div className="flex justify-between items-start relative z-10">
+                          <div>
+                            <h3 className="font-semibold text-lg text-white">
+                              {flashcard.title}
+                            </h3>
+                            <div className="flex items-center text-sm text-blue-300 mt-1">
+                              <Clock className="w-3 h-3 mr-1" />
+                              <span>{flashcard.date}</span>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-blue-300 hover:text-blue-100 hover:bg-blue-800/30"
+                          >
+                            <BookmarkPlus className="w-4 h-4" />
+                          </Button>
+                        </div>
+
+                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-blue-500/20 relative z-10">
+                          <div className="flex space-x-4">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="flex items-center text-blue-300 hover:text-red-400"
+                              onClick={() => handleLikeClick(flashcard.id)}
+                            >
+                              <motion.div
+                                animate={
+                                  likeAnimation === flashcard.id
+                                    ? {
+                                        scale: [1, 1.5, 1],
+                                      }
+                                    : {}
+                                }
+                              >
+                                <Heart
+                                  className={`w-4 h-4 mr-1 ${
+                                    likeAnimation === flashcard.id
+                                      ? "fill-red-400 text-red-400"
+                                      : ""
+                                  }`}
+                                />
+                              </motion.div>
+                              {flashcard.likes || 0}
+                            </Button>
+
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="flex items-center text-blue-300 hover:text-blue-100"
+                            >
+                              <MessageSquare className="w-4 h-4 mr-1" />
+                              {flashcard.comments || 0}
+                            </Button>
+                          </div>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-blue-300 border-blue-500/30 hover:bg-blue-600/20 hover:text-blue-100"
+                          >
+                            Read
+                          </Button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))
+                ) : (
+                  <Card className="p-8 text-center bg-[#152a47] border-blue-500/20">
+                    <BookOpen className="w-12 h-12 text-blue-500/40 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-white mb-2">
+                      No Flashcards yet
+                    </h3>
+                    <p className="text-blue-300 mb-4">
+                      Create your first flashcard to see it here
+                    </p>
+                    <Button 
+                    onClick={() => navigate('/flashcards')}
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800">
+                      Generate Flashcard
+                    </Button>
+                  </Card>
+                )}
+              </motion.div>
+            </TabsContent>
+
           </AnimatePresence>
         </Tabs>
       </motion.div>

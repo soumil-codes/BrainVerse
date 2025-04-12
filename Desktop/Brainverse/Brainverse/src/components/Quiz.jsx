@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { Loader, ChevronLeft, ChevronRight, Plus, Check, X, ArrowRight } from "lucide-react";
@@ -14,6 +14,8 @@ function Quiz() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [explanation, setExplanation] = useState("");
+  const [quizTitle, setQuizTitle] = useState("Generated Quiz");
+  const [saveStatus, setSaveStatus] = useState({ message: "", isError: false });
 
   // Generate quiz from input text
   const generateQuiz = async () => {
@@ -30,11 +32,15 @@ function Quiz() {
       });
       
       setQuizData(response.data.questions);
+      // Generate a title based on the input text (first 30 characters)
+      const generatedTitle = inputText.trim().slice(0, 30) + (inputText.length > 30 ? "..." : "");
+      setQuizTitle(generatedTitle);
       setCurrentQuestion(0);
       setScore(0);
       setQuizCompleted(false);
       setSelectedOption(null);
       setShowFeedback(false);
+      setSaveStatus({ message: "", isError: false });
     } catch (error) {
       console.error("Error generating quiz:", error);
       alert("Failed to generate quiz. Please try again.");
@@ -66,6 +72,7 @@ function Quiz() {
       setShowFeedback(false);
     } else {
       setQuizCompleted(true);
+      submitQuizResults();
     }
   };
 
@@ -76,8 +83,62 @@ function Quiz() {
     setQuizCompleted(false);
     setSelectedOption(null);
     setShowFeedback(false);
+    setSaveStatus({ message: "", isError: false });
   };
 
+  // Submit quiz results to backend
+  const submitQuizResults = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setSaveStatus({ 
+          message: "You need to be logged in to save quiz results", 
+          isError: true 
+        });
+        return;
+      }
+  
+      const response = await axios.post('http://localhost:3001/api/data/quiz', {
+        id: Date.now().toString(),
+        title: quizTitle,
+        date: new Date().toISOString(),
+        score: score,
+        totalQuestions: quizData.length
+      }, {
+        headers: {
+          // Make sure this matches what your authenticateUser middleware expects
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      setSaveStatus({ 
+        message: 'Quiz results saved successfully!', 
+        isError: false 
+      });
+    } catch (error) {
+      console.error("Error saving quiz results:", error);
+      
+      // Enhanced error handling
+      let errorMessage = "Failed to save quiz results";
+      
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        if (error.response.status === 401) {
+          errorMessage = "Authentication failed. Please login again.";
+          // You might want to redirect to login page or clear invalid token
+          localStorage.removeItem('token');
+        } else if (error.response.data && error.response.data.message) {
+          errorMessage = error.response.data.message;
+        }
+      }
+      
+      setSaveStatus({ 
+        message: errorMessage, 
+        isError: true 
+      });
+    }
+  };
   return (
     <div className="min-h-screen bg-slate-900 text-gray-100">
       <div className="container mx-auto p-6">
@@ -136,6 +197,20 @@ function Quiz() {
                   )}
                 </motion.button>
               </div>
+              
+              {/* Quiz Title Input */}
+              {quizData.length > 0 && (
+                <div className="mb-4">
+                  <label className="block text-sm text-gray-400 mb-1">Quiz Title</label>
+                  <input
+                    type="text"
+                    placeholder="Enter quiz title"
+                    value={quizTitle}
+                    onChange={(e) => setQuizTitle(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  />
+                </div>
+              )}
             </motion.div>
             
             <motion.div 
@@ -150,6 +225,7 @@ function Quiz() {
                 <li>• Click "Next" to proceed to the next question</li>
                 <li>• Read explanations to understand the concepts</li>
                 <li>• View your score at the end of the quiz</li>
+                <li>• Results are saved automatically when completed</li>
               </ul>
             </motion.div>
           </div>
@@ -163,7 +239,7 @@ function Quiz() {
           >
             {quizData.length > 0 ? (
               quizCompleted ? (
-                <div className="bg-slate-800 rounded-xl p-12 shadow-xl border border-slate-700 text-center w-full max-w-2xl h-96 flex flex-col items-center justify-center">
+                <div className="bg-slate-800 rounded-xl p-12 shadow-xl border border-slate-700 text-center w-full max-w-2xl h-auto flex flex-col items-center justify-center">
                   <motion.div 
                     animate={{ 
                       scale: [1, 1.1, 1],
@@ -185,6 +261,20 @@ function Quiz() {
                         ? "Good job! Keep learning!" 
                         : "Keep practicing to improve!"}
                   </p>
+                  
+                  {/* Save Status Message */}
+                  {saveStatus.message && (
+                    <div className={`mt-2 mb-6 p-3 rounded-lg ${
+                      saveStatus.isError ? 'bg-red-900/50 border border-red-700' : 'bg-green-900/50 border border-green-700'
+                    }`}>
+                      <p className={`text-sm ${
+                        saveStatus.isError ? 'text-red-300' : 'text-green-300'
+                      }`}>
+                        {saveStatus.message}
+                      </p>
+                    </div>
+                  )}
+                  
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -293,7 +383,11 @@ function Quiz() {
                           : 'bg-slate-700 text-gray-500 cursor-not-allowed'
                       }`}
                     >
-                      Next <ArrowRight size={18} className="ml-1" />
+                      {currentQuestion < quizData.length - 1 ? (
+                        <>Next <ArrowRight size={18} className="ml-1" /></>
+                      ) : (
+                        "Finish Quiz"
+                      )}
                     </motion.button>
                   </div>
                 </div>

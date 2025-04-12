@@ -11,6 +11,7 @@ require('dotenv').config();
 const ytdl = require('ytdl-core');
 const { getSubtitles } = require("youtube-caption-extractor");
 const profileRoute = require('./routes/profile.js'); // Adjust path as needed
+const dataRoutes = require('./routes/data');
 
 
 // const { TranscribeClient } = require('@aws-sdk/client-transcribe'); // Or use Whisper API
@@ -41,6 +42,7 @@ app.use(express.json());
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 app.use("/api/profile", profileRoute);
+app.use('/api/data', dataRoutes);
 
 
 const upload = multer({ 
