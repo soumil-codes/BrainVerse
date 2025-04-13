@@ -12,10 +12,11 @@ const ytdl = require('ytdl-core');
 const { getSubtitles } = require("youtube-caption-extractor");
 const profileRoute = require('./routes/profile.js'); // Adjust path as needed
 const dataRoutes = require('./routes/data');
+const flashcardRoutes = require('./routes/flashcards');
+const quizRouter = require('./routes/quiz');
 
-
-// const { TranscribeClient } = require('@aws-sdk/client-transcribe'); // Or use Whisper API
-
+const connectDB = require('./config/db');
+connectDB();
 
 const app = express();
 const port = 3001;
@@ -507,6 +508,8 @@ app.post('/generate-flashcards', async (req, res) => {
   }
 });
 
+app.use('/api/flashcards', flashcardRoutes);
+
 
 // Add this endpoint to your existing server.js
 app.post('/generate-quiz', async (req, res) => {
@@ -533,8 +536,8 @@ app.post('/generate-quiz', async (req, res) => {
         "explanation": "Brief explanation of why this is correct"
       },
       ...
-    ]
-    
+      ]
+      
     Guidelines:
     - Questions should test understanding of key concepts
     - Provide 4 plausible options per question
@@ -576,6 +579,8 @@ app.post('/generate-quiz', async (req, res) => {
     });
   }
 });
+
+app.use('/api/quizzes', quizRouter);
 
 
 // Add this endpoint with your other routes
@@ -789,6 +794,7 @@ app.post('/chat', async (req, res) => {
     });
   }
 });
+
 // Simple health check endpoint
 app.get('/chat/health', (req, res) => {
   res.json({ status: 'ok', message: 'StudyBuddy chat service is running' });
@@ -798,6 +804,3 @@ app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
 
-const connectDB = require('./config/db');
-
-connectDB();

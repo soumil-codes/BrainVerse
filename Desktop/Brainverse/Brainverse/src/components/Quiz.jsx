@@ -17,6 +17,9 @@ function Quiz() {
   const [quizTitle, setQuizTitle] = useState("Generated Quiz");
   const [saveStatus, setSaveStatus] = useState({ message: "", isError: false });
 
+  const userData = JSON.parse(localStorage.getItem("user"));
+  const userId = userData?.id; // or userData?._id if your backend used _id
+
   // Generate quiz from input text
   const generateQuiz = async () => {
     if (!inputText.trim()) {
@@ -86,59 +89,43 @@ function Quiz() {
     setSaveStatus({ message: "", isError: false });
   };
 
+  // Save quiz results when quiz is completed
+const submitQuizResults = async () => {
+  try {
+    await saveQuizToDB(quizTitle, score, quizData.length);
+    setSaveStatus({ message: "Quiz results saved successfully!", isError: false });
+  } catch (error) {
+    setSaveStatus({ message: "Failed to save quiz results.", isError: true });
+  }
+};
+
+
   // Submit quiz results to backend
-  const submitQuizResults = async () => {
+  const saveQuizToDB = async (quizTitle, score, totalQuestions) => {
     try {
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        setSaveStatus({ 
-          message: "You need to be logged in to save quiz results", 
-          isError: true 
-        });
-        return;
-      }
-  
-      const response = await axios.post('http://localhost:3001/api/data/quiz', {
-        id: Date.now().toString(),
+      const quizData = {
+        id: Date.now(), // or any unique number generator
         title: quizTitle,
         date: new Date().toISOString(),
-        score: score,
-        totalQuestions: quizData.length
-      }, {
-        headers: {
-          // Make sure this matches what your authenticateUser middleware expects
-          'Authorization': `Bearer ${token}`
-        }
+        score,
+        totalQuestions
+      };
+  
+      await axios.post("http://localhost:3001/api/quizzes/add-quiz", {
+        userId,
+        quiz: quizData
       });
-      
-      setSaveStatus({ 
-        message: 'Quiz results saved successfully!', 
-        isError: false 
-      });
+  
+      console.log("Quiz saved to database!");
     } catch (error) {
-      console.error("Error saving quiz results:", error);
-      
-      // Enhanced error handling
-      let errorMessage = "Failed to save quiz results";
-      
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        if (error.response.status === 401) {
-          errorMessage = "Authentication failed. Please login again.";
-          // You might want to redirect to login page or clear invalid token
-          localStorage.removeItem('token');
-        } else if (error.response.data && error.response.data.message) {
-          errorMessage = error.response.data.message;
-        }
-      }
-      
-      setSaveStatus({ 
-        message: errorMessage, 
-        isError: true 
-      });
+      console.error("Error saving quiz:", error);
+      alert("Failed to save quiz. Try again.");
     }
   };
+  
+  
+
+
   return (
     <div className="min-h-screen bg-slate-900 text-gray-100">
       <div className="container mx-auto p-6">

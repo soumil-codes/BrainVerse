@@ -12,24 +12,47 @@ function FlashCards() {
   const [isCreating, setIsCreating] = useState(false);
   const [newCard, setNewCard] = useState({ question: "", answer: "" });
   const [isEditing, setIsEditing] = useState(false);
-
+  // const authenticate = require("./middleware/auth");
+  // const User = require("./models/User.js");
+  const userData = JSON.parse(localStorage.getItem("user"));
+  const userId = userData?.id; // or userData?._id if your backend used _id
+  
+  
   // Generate flash cards from input text using Gemini API
   const generateFlashCards = async () => {
     if (!inputText.trim()) {
       alert("Please enter some text first");
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
-      const response = await axios.post("http://localhost:3001/generate-flashcards", { 
-        text: inputText 
+      const response = await axios.post("http://localhost:3001/generate-flashcards", {
+        text: inputText
       });
-      
+
+      const generatedCards = response.data.cards;
+      const mappedCards = generatedCards.map((card, idx) => ({
+        id: `fc-${Date.now()}-${idx}`,
+        title: card.question,
+        content: card.answer,
+        date: new Date().toISOString(),
+        likes: 0,
+        comments: 0
+      }));
+
       setCards(response.data.cards);
       setCurrentIndex(0);
       setFlipped(false);
+
+      // ⚡ Save to MongoDB
+      // const userId = localStorage.getItem("userId"); // Assuming you're storing userId locally
+      await axios.post("http://localhost:3001/api/flashcards/add-flashcard", {
+        userId,
+        flashcard: mappedCards
+      });
+
     } catch (error) {
       console.error("Error generating flash cards:", error);
       alert("Failed to generate flash cards. Please try again.");
@@ -65,12 +88,12 @@ function FlashCards() {
       alert("Both question and answer are required");
       return;
     }
-    
+
     const updatedCards = [...cards, newCard];
     setCards(updatedCards);
     setNewCard({ question: "", answer: "" });
     setIsCreating(false);
-    
+
     // If this is the first card, set it as current
     if (updatedCards.length === 1) {
       setCurrentIndex(0);
@@ -80,7 +103,7 @@ function FlashCards() {
   // Handle editing the current card
   const handleEditCard = () => {
     if (!cards[currentIndex]) return;
-    
+
     setIsEditing(true);
     setNewCard({
       question: cards[currentIndex].question,
@@ -94,7 +117,7 @@ function FlashCards() {
       alert("Both question and answer are required");
       return;
     }
-    
+
     const updatedCards = [...cards];
     updatedCards[currentIndex] = newCard;
     setCards(updatedCards);
@@ -110,15 +133,15 @@ function FlashCards() {
       setCurrentIndex(0);
       return;
     }
-    
+
     const updatedCards = cards.filter((_, index) => index !== currentIndex);
     setCards(updatedCards);
-    
+
     // Adjust current index if needed
     if (currentIndex >= updatedCards.length) {
       setCurrentIndex(updatedCards.length - 1);
     }
-    
+
     setFlipped(false);
   };
 
@@ -131,7 +154,7 @@ function FlashCards() {
   return (
     <div className="min-h-screen bg-slate-900 text-gray-100">
       <div className="container mx-auto p-6">
-        <motion.h1 
+        <motion.h1
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -139,8 +162,8 @@ function FlashCards() {
         >
           Neural Flash Cards
         </motion.h1>
-        
-        <motion.p 
+
+        <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
@@ -152,14 +175,14 @@ function FlashCards() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Left Panel: Input Controls */}
           <div className="md:col-span-1 space-y-4">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3, duration: 0.5 }}
               className="bg-slate-800 rounded-xl p-4 shadow-lg border border-slate-700"
             >
               <h2 className="text-xl font-semibold mb-3 text-indigo-300">Generate Cards</h2>
-              
+
               {/* Text Input */}
               <div className="mb-4">
                 <label className="block text-sm text-gray-400 mb-1">Enter Text</label>
@@ -169,11 +192,11 @@ function FlashCards() {
                   onChange={(e) => setInputText(e.target.value)}
                   className="w-full h-40 bg-slate-900 border border-slate-700 rounded-lg p-3 text-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
                 ></textarea>
-                
-                <motion.button 
+
+                <motion.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
-                  onClick={generateFlashCards} 
+                  onClick={generateFlashCards}
                   disabled={loading}
                   className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg mt-2 transition duration-200 flex items-center justify-center"
                 >
@@ -188,8 +211,8 @@ function FlashCards() {
                 </motion.button>
               </div>
             </motion.div>
-            
-            <motion.div 
+
+            <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4, duration: 0.5 }}
@@ -206,7 +229,7 @@ function FlashCards() {
                   <Plus size={18} />
                 </motion.button>
               </div>
-              
+
               <AnimatePresence>
                 {isCreating && (
                   <motion.div
@@ -261,7 +284,7 @@ function FlashCards() {
                   </motion.div>
                 )}
               </AnimatePresence>
-              
+
               <AnimatePresence>
                 {isEditing && (
                   <motion.div
@@ -318,8 +341,8 @@ function FlashCards() {
                 )}
               </AnimatePresence>
             </motion.div>
-            
-            <motion.div 
+
+            <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.5, duration: 0.5 }}
@@ -334,9 +357,9 @@ function FlashCards() {
               </ul>
             </motion.div>
           </div>
-          
+
           {/* Right Panel: Flash Cards Display */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5, duration: 0.5 }}
@@ -348,7 +371,7 @@ function FlashCards() {
                 <div className="text-center mb-4 text-indigo-300">
                   Card {currentIndex + 1} of {cards.length}
                 </div>
-                
+
                 {/* Flash card */}
                 <div className="relative perspective w-full h-80 mb-4">
                   <motion.div
@@ -360,10 +383,9 @@ function FlashCards() {
                     style={{ transformStyle: "preserve-3d" }}
                   >
                     {/* Front of card (Question) */}
-                    <div 
-                      className={`absolute inset-0 backface-hidden rounded-2xl p-8 flex flex-col items-center justify-center bg-slate-800 border-2 ${
-                        flipped ? "invisible" : "visible"
-                      } border-indigo-500 shadow-lg`}
+                    <div
+                      className={`absolute inset-0 backface-hidden rounded-2xl p-8 flex flex-col items-center justify-center bg-slate-800 border-2 ${flipped ? "invisible" : "visible"
+                        } border-indigo-500 shadow-lg`}
                     >
                       <h3 className="text-lg text-gray-400 mb-4 text-center">Question:</h3>
                       <p className="text-xl text-center text-white font-medium">
@@ -371,12 +393,11 @@ function FlashCards() {
                       </p>
                       <div className="mt-6 text-sm text-indigo-300">Click to reveal answer</div>
                     </div>
-                    
+
                     {/* Back of card (Answer) */}
-                    <div 
-                      className={`absolute inset-0 backface-hidden rounded-2xl p-8 flex flex-col items-center justify-center bg-slate-800 border-2 ${
-                        flipped ? "visible" : "invisible"
-                      } border-teal-500 shadow-lg`}
+                    <div
+                      className={`absolute inset-0 backface-hidden rounded-2xl p-8 flex flex-col items-center justify-center bg-slate-800 border-2 ${flipped ? "visible" : "invisible"
+                        } border-teal-500 shadow-lg`}
                       style={{ transform: "rotateY(180deg)" }}
                     >
                       <h3 className="text-lg text-gray-400 mb-4 text-center">Answer:</h3>
@@ -387,7 +408,7 @@ function FlashCards() {
                     </div>
                   </motion.div>
                 </div>
-                
+
                 {/* Card navigation */}
                 <div className="flex items-center justify-center space-x-6">
                   <motion.button
@@ -398,37 +419,35 @@ function FlashCards() {
                   >
                     <ChevronLeft size={24} />
                   </motion.button>
-                  
+
                   <div className="flex space-x-3">
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={handleEditCard}
                       disabled={cards.length === 0}
-                      className={`p-2 rounded-full ${
-                        cards.length === 0 
-                          ? 'bg-slate-700 text-gray-500 cursor-not-allowed' 
+                      className={`p-2 rounded-full ${cards.length === 0
+                          ? 'bg-slate-700 text-gray-500 cursor-not-allowed'
                           : 'bg-slate-800 border border-slate-700 text-indigo-400 hover:bg-slate-700'
-                      } transition duration-200`}
+                        } transition duration-200`}
                     >
                       <Edit size={18} />
                     </motion.button>
-                    
+
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={handleDeleteCard}
                       disabled={cards.length === 0}
-                      className={`p-2 rounded-full ${
-                        cards.length === 0 
-                          ? 'bg-slate-700 text-gray-500 cursor-not-allowed' 
+                      className={`p-2 rounded-full ${cards.length === 0
+                          ? 'bg-slate-700 text-gray-500 cursor-not-allowed'
                           : 'bg-slate-800 border border-slate-700 text-red-400 hover:bg-slate-700'
-                      } transition duration-200`}
+                        } transition duration-200`}
                     >
                       <Trash size={18} />
                     </motion.button>
                   </div>
-                  
+
                   <motion.button
                     whileHover={{ scale: 1.2 }}
                     whileTap={{ scale: 0.9 }}
@@ -441,9 +460,9 @@ function FlashCards() {
               </div>
             ) : (
               <div className="bg-slate-800 rounded-xl p-12 shadow-xl border border-slate-700 text-center w-full max-w-2xl h-96 flex flex-col items-center justify-center">
-                <motion.div 
-                  animate={{ 
-                    y: [0, -10, 0], 
+                <motion.div
+                  animate={{
+                    y: [0, -10, 0],
                     opacity: [0.7, 1, 0.7]
                   }}
                   transition={{ repeat: Infinity, duration: 3 }}

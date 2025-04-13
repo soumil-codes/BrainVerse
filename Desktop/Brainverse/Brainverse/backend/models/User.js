@@ -58,18 +58,18 @@ const UserSchema = new mongoose.Schema({
     date: String,
     score: Number,
     totalQuestions: Number
-  }]
+  }],
+  flashcards: [
+    {
+      id: String,
+      title: String,
+      content: String,
+      date: String,
+      likes: { type: Number, default: 0 },
+      comments: { type: Number, default: 0 }
+    }
+  ]
 }, { timestamps: true });
-flashcards: [
-  {
-    id: String,
-    title: String,
-    content: String,
-    date: String,
-    likes: { type: Number, default: 0 },
-    comments: { type: Number, default: 0 }
-  }
-],
 
 
 module.exports = mongoose.model('User', UserSchema);

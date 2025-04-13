@@ -5,20 +5,21 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/Tabs";
 import { Progress } from "./ui/Progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  BookOpen, 
+import {
+  BookOpen,
   Brain,
-  CheckCircle, 
+  CheckCircle,
   PenTool,
   Clock,
-  Heart, 
-  MessageSquare, 
+  Heart,
+  MessageSquare,
   BookmarkPlus,
   Activity,
   Mail,
   Layers
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
 
 // Define API base URL - make sure this matches your backend server
 const API_BASE_URL = "http://localhost:3001/api";
@@ -39,6 +40,8 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const [openFlashcardId, setOpenFlashcardId] = useState(null);
+
 
   // Default user data structure
   const defaultUserData = {
@@ -70,12 +73,12 @@ const ProfilePage = () => {
     const fetchUserProfile = async () => {
       try {
         setLoading(true);
-        
+
         const token = getAuthToken();
         if (!token) {
           throw new Error("No authentication token found. Please login again.");
         }
-        
+
         const response = await fetch(`${API_BASE_URL}/profile`, {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -89,18 +92,19 @@ const ProfilePage = () => {
 
         const userData = await response.json();
         console.log("Received user data:", userData);
-        
+
         // Transform the backend data to match frontend expectations
         const transformedData = {
           fullName: userData.fullName || "",
           email: userData.email || "",
           title: userData.title || "AI Study Enthusiast",
           stats: {
-            summaries: userData.summaries?.length || 0,
-            mindMaps: userData.mindMaps?.length || 0,
-            quizzes: userData.quizzes?.length || 0,
-            flashcards: userData.flashcards?.length || 0
+            summaries: userData.stats?.summaries || 0,
+            mindMaps: userData.stats?.mindMaps || 0,
+            quizzes: userData.stats?.quizzes || 0,
+            flashcards: userData.stats?.flashcards || 0
           },
+
           summaries: userData.summaries || [],
           mindMaps: userData.mindMaps || [],
           quizzes: userData.quizzes || [],
@@ -113,23 +117,23 @@ const ProfilePage = () => {
           email: transformedData.email,
           title: transformedData.title
         });
-        
+
         startLoadingAnimation();
       } catch (err) {
         console.error("Error fetching profile:", err);
         setError(err.message);
         startLoadingAnimation(); // Still show UI with error message
-        
+
         // If token is invalid, redirect to login
         if (err.message.includes("authentication") || err.message.includes("401")) {
           setTimeout(() => navigate('/login'), 3000);
         }
       }
     };
-    
+
     fetchUserProfile();
   }, [navigate]);
-  
+
   // Start loading animation
   const startLoadingAnimation = () => {
     const timer = setTimeout(() => {
@@ -177,7 +181,7 @@ const ProfilePage = () => {
       if (!token) {
         throw new Error("No authentication token found");
       }
-      
+
       const response = await fetch(`${API_BASE_URL}/profile`, {
         method: 'PUT',
         headers: {
@@ -189,13 +193,13 @@ const ProfilePage = () => {
           title: profileData.title
         })
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const updatedUser = await response.json();
-      
+
       // Update local state with the returned data
       setUser({
         ...user,
@@ -203,13 +207,13 @@ const ProfilePage = () => {
         email: updatedUser.email || profileData.email,
         title: updatedUser.title || profileData.title
       });
-      
+
       setProfileData({
         name: updatedUser.fullName || profileData.name,
         email: updatedUser.email || profileData.email,
         title: updatedUser.title || profileData.title
       });
-      
+
       setIsEditing(false);
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -231,8 +235,8 @@ const ProfilePage = () => {
   };
 
   // Merge user data from backend with default structure
-  const userData = user ? { 
-    ...defaultUserData, 
+  const userData = user ? {
+    ...defaultUserData,
     name: user.fullName || user.name || "",
     email: user.email || "",
     title: user.title || "AI Study Enthusiast",
@@ -246,9 +250,9 @@ const ProfilePage = () => {
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { 
+    visible: {
       opacity: 1,
-      transition: { 
+      transition: {
         duration: 0.7,
         when: "beforeChildren",
         staggerChildren: 0.15
@@ -256,10 +260,15 @@ const ProfilePage = () => {
     }
   };
 
+  const handleReadClick = (id) => {
+    setOpenFlashcardId((prev) => (prev === id ? null : id));
+  };
+
+
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
-    visible: { 
-      y: 0, 
+    visible: {
+      y: 0,
       opacity: 1,
       transition: { duration: 0.5, type: "spring", stiffness: 100 }
     }
@@ -267,13 +276,13 @@ const ProfilePage = () => {
 
   const tabContentVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       transition: { duration: 0.5, type: "spring", stiffness: 100 }
     },
-    exit: { 
-      opacity: 0, 
+    exit: {
+      opacity: 0,
       y: -20,
       transition: { duration: 0.3 }
     }
@@ -284,14 +293,14 @@ const ProfilePage = () => {
       <div className="max-w-8xl w-full mx-auto pt-20 flex flex-col items-center justify-center min-h-screen bg-[#0a1929]">
         <div className="relative mb-8 pt-20">
           <motion.div
-            animate={{ 
+            animate={{
               scale: [1, 1.2, 1],
               rotate: [0, 180, 360],
             }}
-            transition={{ 
+            transition={{
               duration: 2,
               repeat: Infinity,
-              ease: "easeInOut" 
+              ease: "easeInOut"
             }}
             className="absolute -inset-8 rounded-full opacity-30 bg-gradient-to-r from-blue-600 to-purple-600 blur-xl"
           />
@@ -299,9 +308,9 @@ const ProfilePage = () => {
         <h2 className="text-2xl font-bold mb-6 text-white">Loading Profile</h2>
         <div className="w-full max-w-md relative">
           <Progress value={progress} className="h-2 bg-[#1a2e4c]" />
-          <motion.div 
+          <motion.div
             className="h-2 absolute top-0 left-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
-            style={{ width: `${progress/3}%` }}
+            style={{ width: `${progress / 3}%` }}
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1.5, repeat: Infinity }}
           />
@@ -318,7 +327,7 @@ const ProfilePage = () => {
           <Activity className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-white mb-4">Authentication Error</h2>
           <p className="text-blue-300 mb-6">{error}</p>
-          <Button 
+          <Button
             onClick={() => navigate('/login')}
             className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900"
           >
@@ -510,44 +519,40 @@ const ProfilePage = () => {
           <TabsList className="flex space-x-2 p-1 bg-[#152a47]/50 rounded-xl border border-blue-500/20 flex-wrap">
             <TabsTrigger
               value="summaries"
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                selectedTab === "summaries"
-                  ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white"
-                  : "text-blue-300 hover:bg-blue-800/20"
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${selectedTab === "summaries"
+                ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white"
+                : "text-blue-300 hover:bg-blue-800/20"
+                }`}
             >
               <BookOpen className="w-4 h-4" />
               Summaries
             </TabsTrigger>
             <TabsTrigger
               value="mindmaps"
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                selectedTab === "mindmaps"
-                  ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white"
-                  : "text-blue-300 hover:bg-blue-800/20"
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${selectedTab === "mindmaps"
+                ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white"
+                : "text-blue-300 hover:bg-blue-800/20"
+                }`}
             >
               <Brain className="w-4 h-4" />
               Mind Maps
             </TabsTrigger>
             <TabsTrigger
               value="quizzes"
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                selectedTab === "quizzes"
-                  ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white"
-                  : "text-blue-300 hover:bg-blue-800/20"
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${selectedTab === "quizzes"
+                ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white"
+                : "text-blue-300 hover:bg-blue-800/20"
+                }`}
             >
               <CheckCircle className="w-4 h-4" />
               Quizzes
             </TabsTrigger>
             <TabsTrigger
               value="flashcards"
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                selectedTab === "flashcards"
-                  ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white"
-                  : "text-blue-300 hover:bg-blue-800/20"
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${selectedTab === "flashcards"
+                ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white"
+                : "text-blue-300 hover:bg-blue-800/20"
+                }`}
             >
               <Layers className="w-4 h-4" />
               Flashcards
@@ -614,17 +619,16 @@ const ProfilePage = () => {
                                 animate={
                                   likeAnimation === summary.id
                                     ? {
-                                        scale: [1, 1.5, 1],
-                                      }
+                                      scale: [1, 1.5, 1],
+                                    }
                                     : {}
                                 }
                               >
                                 <Heart
-                                  className={`w-4 h-4 mr-1 ${
-                                    likeAnimation === summary.id
-                                      ? "fill-red-400 text-red-400"
-                                      : ""
-                                  }`}
+                                  className={`w-4 h-4 mr-1 ${likeAnimation === summary.id
+                                    ? "fill-red-400 text-red-400"
+                                    : ""
+                                    }`}
                                 />
                               </motion.div>
                               {summary.likes || 0}
@@ -660,9 +664,9 @@ const ProfilePage = () => {
                     <p className="text-blue-300 mb-4">
                       Create your first summary to see it here
                     </p>
-                    <Button 
-                    onClick={() => navigate('/summarization')}
-                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800">
+                    <Button
+                      onClick={() => navigate('/summarization')}
+                      className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800">
                       Create Summary
                     </Button>
                   </Card>
@@ -734,7 +738,7 @@ const ProfilePage = () => {
                       Create your first mind map to visualize connections
                     </p>
                     <Button
-                        onClick={() => navigate('/mindmap')}
+                      onClick={() => navigate('/mindmap')}
                       className="bg-gradient-to-r from-purple-600 to-blue-700 hover:from-purple-700 hover:to-blue-800"
                     >
                       Create Mind Map
@@ -786,14 +790,14 @@ const ProfilePage = () => {
                               Score
                             </span>
                             <span className="text-sm font-bold text-green-400">
-                              {quiz.score}
+                              {quiz.score} / {quiz.totalQuestions}
                             </span>
                           </div>
                           <div className="relative h-2 bg-[#0f2039] rounded-full overflow-hidden">
                             <motion.div
                               className="absolute top-0 left-0 h-full bg-gradient-to-r from-green-500 to-green-600 rounded-full"
                               initial={{ width: 0 }}
-                              animate={{ width: quiz.score }}
+                              animate={{ width: quiz.score / quiz.totalQuestions * 1200 }}
                               transition={{ duration: 1, delay: 0.3 }}
                             />
                           </div>
@@ -821,8 +825,8 @@ const ProfilePage = () => {
                       Test your knowledge by taking your first quiz
                     </p>
                     <Button
-                    onClick={() => navigate('/quiz')}
-                     className="bg-gradient-to-r from-green-600 to-blue-700 hover:from-green-700 hover:to-blue-800">
+                      onClick={() => navigate('/quiz')}
+                      className="bg-gradient-to-r from-green-600 to-blue-700 hover:from-green-700 hover:to-blue-800">
                       Take a Quiz
                     </Button>
                   </Card>
@@ -839,14 +843,14 @@ const ProfilePage = () => {
                 exit="exit"
                 className="mt-6 space-y-4"
               >
-               {userData.flashcards && userData.flashcards.length > 0 ? (
-  userData.flashcards.map((flashcard) => (
+                {userData.flashcards && userData.flashcards.length > 0 ? (
+                  userData.flashcards.map((flashcard) => (
                     <motion.div
                       key={flashcard.id}
                       whileHover={{ scale: 1.02 }}
                       onHoverStart={() => setHoverCard(flashcard.id)}
                       onHoverEnd={() => setHoverCard(null)}
-                      className="bg-[#152a47] rounded-xl border border-blue-500/20 overflow-hidden"
+                     className="bg-gradient-to-br from-[#1e2a44] to-[#152a47] rounded-2xl border border-blue-500/10 shadow-md transition-all duration-300 hover:shadow-blue-500/20"
                     >
                       <div className="p-5 relative">
                         {hoverCard === flashcard.id && (
@@ -889,17 +893,16 @@ const ProfilePage = () => {
                                 animate={
                                   likeAnimation === flashcard.id
                                     ? {
-                                        scale: [1, 1.5, 1],
-                                      }
+                                      scale: [1, 1.5, 1],
+                                    }
                                     : {}
                                 }
                               >
                                 <Heart
-                                  className={`w-4 h-4 mr-1 ${
-                                    likeAnimation === flashcard.id
-                                      ? "fill-red-400 text-red-400"
-                                      : ""
-                                  }`}
+                                  className={`w-4 h-4 mr-1 ${likeAnimation === flashcard.id
+                                    ? "fill-red-400 text-red-400"
+                                    : ""
+                                    }`}
                                 />
                               </motion.div>
                               {flashcard.likes || 0}
@@ -919,25 +922,42 @@ const ProfilePage = () => {
                             variant="outline"
                             size="sm"
                             className="text-blue-300 border-blue-500/30 hover:bg-blue-600/20 hover:text-blue-100"
+                            onClick={() => handleReadClick(flashcard.id)}
                           >
-                            Read
+                            {openFlashcardId === flashcard.id ? "Hide" : "Read"}
                           </Button>
                         </div>
+                        <AnimatePresence initial={false}>
+                          {openFlashcardId === flashcard.id && (
+                            <motion.div
+                              key="answer"
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="mt-4 text-sm text-white overflow-hidden "
+                            >
+                              <p>{flashcard.content || "No answer provided."}</p>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+
+
                       </div>
                     </motion.div>
                   ))
                 ) : (
                   <Card className="p-8 text-center bg-[#152a47] border-blue-500/20">
-                    <BookOpen className="w-12 h-12 text-blue-500/40 mx-auto mb-4" />
+                    <Layers className="w-12 h-12 text-yellow-500/40 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-white mb-2">
                       No Flashcards yet
                     </h3>
                     <p className="text-blue-300 mb-4">
                       Create your first flashcard to see it here
                     </p>
-                    <Button 
-                    onClick={() => navigate('/flashcards')}
-                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800">
+                    <Button
+                      onClick={() => navigate('/flashcards')}
+                      className="bg-gradient-to-r from-orange-600 to-yellow-400 hover:from-blue-700 hover:to-blue-800">
                       Generate Flashcard
                     </Button>
                   </Card>
