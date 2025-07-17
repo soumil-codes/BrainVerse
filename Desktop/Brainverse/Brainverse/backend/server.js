@@ -75,7 +75,7 @@ const upload = multer({
 app.use(express.json());
 
 // Initialize Gemini API
-const genAI = new GoogleGenerativeAI("AIzaSyCnRDFKKF1IDvk4ytxb9eJIV6BrJZdLB2Y");
+const genAI = new GoogleGenerativeAI("AIzaSyCiBo09C70Oig-tgnwpJXR1pkS3ecLkznU");
 
 // Function to extract text from PDF
 async function extractTextFromPdf(filePath) {
@@ -102,7 +102,7 @@ async function generateMindMapWithGemini(text) {
     console.log("Received text for processing:", text.substring(0, 100) + "...");
 
     // Get the Gemini 1.5 model
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     // Create prompt for mind map generation
     const prompt = `
@@ -253,7 +253,7 @@ async function processDocument(file) {
 // Add this helper function with your other Gemini functions
 async function generateSummaryWithGemini(text) {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     
     const prompt = `Provide the summary in clean plain text format:
     - DO NOT use markdown (** or any formatting)
@@ -337,7 +337,7 @@ async function getYouTubeCaptions(videoId) {
 
 async function detectLanguage(text) {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     const prompt = `Identify the language of the following text. Respond ONLY with the ISO 639-1 language code (e.g., "en", "es", "fr"):
     
     Text: ${text.substring(0, 1000)}`;
@@ -462,7 +462,7 @@ app.post('/generate-flashcards', async (req, res) => {
     
     console.log("Received text for flashcard generation:", text.substring(0, 100) + "...");
     
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     
     const prompt = `
     Generate a set of flashcards from the following text. 
@@ -531,7 +531,7 @@ app.post('/generate-quiz', async (req, res) => {
     
     console.log("Received text for quiz generation:", text.substring(0, 100) + "...");
     
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     
     const prompt = `
     Generate a multiple-choice quiz from the following text. 
@@ -738,7 +738,7 @@ app.post('/chat', async (req, res) => {
     console.log("Received chat message:", message);
 
     // Initialize Gemini model
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     // Enhanced prompt that supports both navigation and content suggestions
     const prompt = `

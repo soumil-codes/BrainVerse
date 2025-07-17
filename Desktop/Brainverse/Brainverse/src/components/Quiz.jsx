@@ -135,7 +135,7 @@ const submitQuizResults = async () => {
           transition={{ duration: 0.5 }}
           className="text-3xl font-bold text-indigo-400 mb-2"
         >
-          Neural Quiz Generator
+          Quiz Generator
         </motion.h1>
         
         <motion.p 
